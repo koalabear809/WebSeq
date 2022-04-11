@@ -54,12 +54,10 @@ function selectorClicked(element){
 			}
 		});
 	}, 0);
-	
 }
 
-async function onFileDropInstrument(e){
+async function onFileDropInstrument(e: Event, name: string){
 	e.preventDefault();
-	
 	//insert audio buffer
 	instruments[this.dataset.instrument].buffer = await createAudioBufferFromFile(e.dataTransfer.files[0])
 
@@ -102,6 +100,7 @@ function newSeqRow(name){
 	}
 }
 
+/*
 function addSampler(name){
 	var seqWrapper = document.getElementById("seq-pads-wrapper");
 	var seqRow = newSeqRow(name);
@@ -116,22 +115,26 @@ function addSampler(name){
 
 	seqWrapper.innerHTML += seqRow["view"];
 
-	/*
-	 * Needs setTimeout() to process in the next event loop. This buys the
-	 * DOM time to paint the seqWrapper innerHTML addition above.
-	 */
 	setTimeout(() => {
 		var instSel = document.getElementById(`inst-selector-${name}`)
 		instSel.addEventListener("dragover", (e) => {e.preventDefault();})
 		instSel.addEventListener("drop", onFileDropInstrument);
 	}, 0);
 }
+*/
 
 window.onload = () => {
 	//make initial instruments
+	/*
 	addSampler("Kick");
 	addSampler("Hat");
 	addSampler("Snare");
 	addSampler("Clap");
+	*/
+
+	//global seq
+	const seq = new Seq();
+	seq.addInstrument("kick");
+
 	console.log("derp!");
 }

@@ -1,4 +1,4 @@
-async function createAudioBufferFromFile(file){
+async function createAudioBufferFromFile(file: File){
 	let fileBuffer = await file.arrayBuffer();
 	return context.decodeAudioData(fileBuffer);
 }
