@@ -45,48 +45,44 @@ class Scheduler {
 class Transport {
     constructor(schedule) {
         this.isPlaying = false;
-        this.playButton = document.createElement('button');
-        this.playButton.innerHTML = "PLAY";
-        this.playButton.id = "transport-play-button";
-        this.playButton.addEventListener("click", () => {
-            this.isPlaying = !this.isPlaying;
-            if (this.isPlaying) {
-                this.playButton.innerHTML = "PAUSE";
-                //play that shit!
-                //schedule.currentNote = 0;
-                schedule.nextNoteTime = context.currentTime;
-                schedule.schedule(); //it begins...
-            }
-            else {
-                this.playButton.innerHTML = "PLAY";
-                window.clearTimeout(schedule.timerID);
-                //stop & clear all current Nodes.
-                for (const instrument in instruments) {
-                    if (instruments[instrument].currentNode !== null) {
-                        instruments[instrument].currentNode.stop();
-                        instruments[instrument].currentNode = null;
+        this.playButton = makeElement("button", {
+            innerHTML: "PLAY",
+            id: "transport-play-button",
+            style: {
+                width: "100px",
+                borderRadius: "5px"
+            },
+            onclick: () => {
+                this.isPlaying = !this.isPlaying;
+                if (this.isPlaying) {
+                    this.playButton.innerHTML = "STOP";
+                    //play that shit!
+                    schedule.currentNote = 0;
+                    schedule.nextNoteTime = context.currentTime;
+                    schedule.schedule(); //it begins...
+                }
+                else {
+                    this.playButton.innerHTML = "PLAY";
+                    window.clearTimeout(schedule.timerID);
+                    //stop & clear all current Nodes.
+                    for (const instrument in instruments) {
+                        if (instruments[instrument].currentNode !== null) {
+                            instruments[instrument].currentNode.stop();
+                            instruments[instrument].currentNode = null;
+                        }
                     }
                 }
             }
         });
-        this.stopButton;
-        this.view = document.createElement('div');
+        this.view = makeElement("div", {
+            style: {
+                margin: "10px",
+                padding: "10px",
+                border: "1px solid red",
+                borderRadius: "5px"
+            }
+        });
         this.view.appendChild(this.playButton);
-        /*
-         * Styles
-         */
-        let buttonStyle = {
-            width: "100px",
-            borderRadius: "5px"
-        };
-        setStyle(this.playButton, buttonStyle);
-        let wrapperStyle = {
-            margin: "10px",
-            padding: "10px",
-            border: "1px solid red",
-            borderRadius: "5px"
-        };
-        setStyle(this.view, wrapperStyle);
     }
 }
 async function createAudioBufferFromFile(file) {
