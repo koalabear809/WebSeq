@@ -23,8 +23,7 @@ class Instrument{
 		}
 
 		let controls = new Controls(this.name);
-		//TODO: check if waveform empty
-		controls.drawWaveform();
+		this.buffer ? controls.drawWaveform() : console.log("waveform empty");
 		controlWrapper.appendChild(controls.view);
 	}
 
@@ -62,6 +61,13 @@ class Controls {
 		this.view.appendChild(this.title);
 		this.view.appendChild(this.playButton);
 		this.view.appendChild(this.waveformDisplay);
+
+		let buttonStyle = {
+			backgroundColor: "green",
+			width: "100px"
+		}
+
+		setStyle(this.playButton, buttonStyle);
 	}
 
 	drawWaveform(){
@@ -163,4 +169,3 @@ class Seq {
 		seqWrapper.appendChild(seqRow["view"]);
 	}
 }
-

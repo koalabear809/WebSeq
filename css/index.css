@@ -1,10 +1,16 @@
 html, body {
 	margin: 0px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-flow: column;
+	width: 100%;
 }
 
 #navbar{
 	height: 50;
 	background-color: #ff3535;
+	width: 100%;
 }
 
 #main-wrapper{
@@ -23,7 +29,7 @@ html, body {
 	border: 1px dashed black;
 	border-radius: 5px;
 	max-height: 90vh;
-	/*width: 90vw;*/
+	width: 90vw;
 	margin-top: 60px;
 }
 

@@ -61,6 +61,7 @@ class Scheduler {
 class Transport {
 	isPlaying: boolean;
 	playButton: HTMLButtonElement;
+	stopButton: HTMLButtonElement;
 	view: HTMLDivElement;
 	
 	constructor(schedule: Scheduler){
@@ -71,11 +72,13 @@ class Transport {
 		this.playButton.addEventListener("click", () => {
 			this.isPlaying = !this.isPlaying;
 			if(this.isPlaying){
+				this.playButton.innerHTML = "PAUSE";
 				//play that shit!
-				schedule.currentNote = 0;
+				//schedule.currentNote = 0;
 				schedule.nextNoteTime = context.currentTime;
 				schedule.schedule(); //it begins...
 			} else {
+				this.playButton.innerHTML = "PLAY";
 				window.clearTimeout(schedule.timerID);
 
 				//stop & clear all current Nodes.
@@ -88,8 +91,27 @@ class Transport {
 			}
 		});
 
+		this.stopButton;
+
 		this.view = document.createElement('div');
 		this.view.appendChild(this.playButton)
+
+		/*
+		 * Styles
+		 */
+		let buttonStyle = {
+			width: "100px",
+			borderRadius: "5px"
+		}
+		setStyle(this.playButton, buttonStyle);
+
+		let wrapperStyle = {
+			margin: "10px",
+			padding: "10px",
+			border: "1px solid red",
+			borderRadius: "5px"
+		}
+		setStyle(this.view, wrapperStyle)
 	}
 }
 
