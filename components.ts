@@ -34,40 +34,41 @@ class Instrument{
 
 class Controls {
 	name: string;
-	view: HTMLDivElement;
-	title: HTMLDivElement;
-	playButton: HTMLButtonElement;
+	view: HTMLElement;
+	title: HTMLElement;
+	playButton: HTMLElement;
 	waveformDisplay: HTMLCanvasElement;
 
 	constructor(name: string){
 		this.name = name;
-		this.view = document.createElement('div');
-
-		this.title = document.createElement('div');
-		this.title.innerHTML = this.name;
-
-		this.playButton = document.createElement('button');
-		this.playButton.id = `play-${this.name}`;
-		this.playButton.dataset.inst = this.name;
-		this.playButton.style.height = "20px";
-		this.playButton.innerHTML = "PLAY";
-		this.playButton.addEventListener("click", () => {
-			console.log("play button control clicked");
+		
+		this.title = makeElement("div", {
+			innerHTML: this.name
 		});
 
-		this.waveformDisplay = document.createElement('canvas');
+		this.playButton = makeElement('button', {
+			id: `play-${this.name}`,
+			innerHTML: "PLAY",
+			dataset: {
+				inst: this.name
+			},
+			style: {
+				height: "20px",
+				backgroundColor: "green",
+				width: "100px"
+			},
+			onclick: () => {
+				console.log("Play button control clicked");
+			}
+		});
+
+		this.view = document.createElement("div", {});
+		this.waveformDisplay = makeElement('canvas', {});
 
 		//frankenstein
 		this.view.appendChild(this.title);
 		this.view.appendChild(this.playButton);
 		this.view.appendChild(this.waveformDisplay);
-
-		let buttonStyle = {
-			backgroundColor: "green",
-			width: "100px"
-		}
-
-		setStyle(this.playButton, buttonStyle);
 	}
 
 	drawWaveform(){
@@ -93,62 +94,69 @@ class Controls {
 }
 
 class Pad {
-	view: HTMLDivElement;
+	view: HTMLElement;
 	toggle: boolean;
 
 	constructor(num: number, name: string){
-		this.view = document.createElement('div');
-		this.view.className = "pad";
-		this.view.dataset.num = num.toString();
-		this.view.dataset.instrument = name;
-
 		this.toggle = false;
-		this.view.addEventListener("click", () => {
-			this.toggle = !this.toggle;
-			this.toggle ? this.view.style.backgroundColor = "red" : this.view.style.backgroundColor = "#cecece";
-		});
+		this.view = makeElement('div', {
+			className: "pad",
+			dataset: {
+				num: num.toString(),
+				instrument: name,
+			},
+			onclick: () => {
+				this.toggle = !this.toggle;
+				this.toggle ? this.view.style.backgroundColor = "red" : this.view.style.backgroundColor = "#cecece";
+			}
+		})
 	}
 }
 
 class SeqRow {
 	pads: Pad[];
-	view: HTMLDivElement;
-	instSelector: HTMLDivElement;
-	button: HTMLDivElement;
-	padsWrapper: HTMLDivElement;
+	view: HTMLElement;
+	instSelector: HTMLElement;
+	button: HTMLElement;
+	padsWrapper: HTMLElement;
 
 	constructor(name: string){
-		this.view = document.createElement('div');
-		this.view.className = "seq-row";
-		this.view.id = `row-${name}`
-
-		this.instSelector = document.createElement('div');
-		this.instSelector.className = "inst-selector";
-		this.instSelector.id = `inst-selector-${name}`;
-
-		this.button = document.createElement('div');
-		this.button.className = "inst-selector-button";
-		this.button.id = `inst-selector-button-${name}`
-		this.button.innerHTML = name;
-		this.instSelector.appendChild(this.button);
-		this.view.appendChild(this.instSelector);
-
-		this.padsWrapper = document.createElement('div');
-		this.padsWrapper.className = "pads-wrapper";
 		this.pads = this.addPads(name);
+		instruments[name].playblocks = this.pads;
+
+		this.view = makeElement('div', {
+			className: "seq-row",
+			id: `row-${name}`
+		});
+
+		this.instSelector = makeElement('div', {
+			className: "inst-selector",
+			id: `inst-selector-${name}`
+		});
+
+		this.button = makeElement('div', {
+			className: "inst-selector-button",
+			id: `inst-selector-button-${name}`,
+			innerHTML: name,
+			onclick: instruments[name].controlView,
+			ondragover: (e) => {e.preventDefault();},
+			ondrop: async (e) => {
+				e.preventDefault();
+				instruments[name].buffer = await createAudioBufferFromFile(e.dataTransfer.files[0])
+				instruments[name].controlView();
+			}
+		});
+
+		this.padsWrapper = makeElement('div', {
+			className: "pads-wrapper",
+		});
+
 		this.pads.forEach(pad => {
 			this.padsWrapper.appendChild(pad.view);
 		});
+		this.instSelector.appendChild(this.button);
+		this.view.appendChild(this.instSelector);
 		this.view.appendChild(this.padsWrapper);
-
-		instruments[name].playblocks = this.pads;
-		this.button.addEventListener("click", instruments[name].controlView);
-		this.button.addEventListener("dragover", (e) => {e.preventDefault();})
-		this.button.addEventListener("drop", async (e) => {
-			e.preventDefault();
-			instruments[name].buffer = await createAudioBufferFromFile(e.dataTransfer.files[0])
-			instruments[name].controlView();
-		});
 	}
 
 	addPads(name: string): Pad[]{

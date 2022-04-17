@@ -14,7 +14,7 @@ function setElementAttrs(element: HTMLElement, attributes: Object): void {
 	}
 }
 
-function makeElement(type: string, attributes: Object): HTMLElement {
+function makeElement(type: string, attributes: Object): any {
 	let newElement = document.createElement(type)
 	setElementAttrs(newElement, attributes)
 	return newElement;
