@@ -26,10 +26,6 @@ class Instrument{
 		this.buffer ? controls.drawWaveform() : console.log("waveform empty");
 		controlWrapper.appendChild(controls.view);
 	}
-
-	setBuffer(): void {
-
-	}
 }
 
 class Controls {
@@ -43,7 +39,10 @@ class Controls {
 		this.name = name;
 		
 		this.title = makeElement("div", {
-			innerHTML: this.name
+			innerHTML: this.name,
+			style: {
+				margin: "10px"
+			}
 		});
 
 		this.playButton = makeElement('button', {
@@ -53,14 +52,12 @@ class Controls {
 				inst: this.name
 			},
 			style: {
-				height: "20px",
-				backgroundColor: "green",
-				width: "100px"
+				cursor: "pointer"
 			},
 			onclick: () => {
 				console.log("Play button control clicked");
 			}
-		});
+		}, genericButton);
 
 		this.view = document.createElement("div", {});
 		this.waveformDisplay = makeElement('canvas', {});
@@ -101,13 +98,25 @@ class Pad {
 		this.toggle = false;
 		this.view = makeElement('div', {
 			className: "pad",
+			style: {
+				width: "30px",
+				height: "30px",
+				border: "1px solid black",
+				backgroundColor: "#EDEDED",
+				margin: "5px",
+				borderRadius: "5px"
+			},
 			dataset: {
 				num: num.toString(),
 				instrument: name,
 			},
 			onclick: () => {
 				this.toggle = !this.toggle;
-				this.toggle ? this.view.style.backgroundColor = "red" : this.view.style.backgroundColor = "#cecece";
+				if(this.toggle){
+					setStyle(this.view, {backgroundColor: colorScheme["red"]});
+				} else {
+					setStyle(this.view, {backgroundColor: colorScheme["lightgrey"]});
+				}
 			}
 		})
 	}
@@ -138,6 +147,9 @@ class SeqRow {
 			className: "inst-selector-button",
 			id: `inst-selector-button-${name}`,
 			innerHTML: name,
+			style: {
+				cursor: "pointer",
+			},
 			onclick: instruments[name].controlView,
 			ondragover: (e) => {e.preventDefault();},
 			ondrop: async (e) => {
@@ -145,7 +157,7 @@ class SeqRow {
 				instruments[name].buffer = await createAudioBufferFromFile(e.dataTransfer.files[0])
 				instruments[name].controlView();
 			}
-		});
+		}, genericButton);
 
 		this.padsWrapper = makeElement('div', {
 			className: "pads-wrapper",
@@ -167,7 +179,6 @@ class SeqRow {
 		return allPads;
 	}
 }
-
 
 class Seq {
 	addInstrument(name: string): any {

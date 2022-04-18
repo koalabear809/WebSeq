@@ -14,11 +14,6 @@ html, body {
 }
 
 #main-wrapper{
-	/*
-	display: flex;
-	align-items: center;
-	justify-content: center;
-*/
 }
 
 #seq-pads-wrapper{
@@ -43,38 +38,10 @@ html, body {
 	margin-right: 20px;
 }
 
-.inst-selector-button{
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 40px;
-	width: 100px;
-	border: 1px solid black;
-	background-color: #cecece;
-	margin: 10px;
-	border-radius: 5px;
-}
-
 .pads-wrapper{
 	display: inline-flex;
 }
 
-.pad{
-	width: 30px;
-	height: 30px;
-	border: 1px solid black;
-	background-color: #cecece;
-	margin: 5px;
-	border-radius: 5px;
-}
-
 #seq-controls{
 	height: 200px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.waveform-display{
-	border: 1px solid black;
 }

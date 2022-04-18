@@ -14,8 +14,17 @@ function setElementAttrs(element: HTMLElement, attributes: Object): void {
 	}
 }
 
-function makeElement(type: string, attributes: Object): any {
+function makeElement(type: string, attributes: Object, base?: Object): any {
+	let styles: Object;
+	let newAttributeObject: Object;
+	if(base && ('style' in base) && ('style' in attributes)){
+		styles = Object.assign(attributes["style"], base["style"]);
+		newAttributeObject = Object.assign(attributes, base);
+		newAttributeObject["style"] = styles;
+	} else {
+		newAttributeObject = Object.assign(attributes, base);
+	}
 	let newElement = document.createElement(type)
-	setElementAttrs(newElement, attributes)
+	setElementAttrs(newElement, newAttributeObject)
 	return newElement;
 }

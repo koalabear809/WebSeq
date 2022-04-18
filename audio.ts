@@ -62,6 +62,7 @@ class Transport {
 	isPlaying: boolean;
 	playButton: HTMLElement;
 	stopButton: HTMLElement;
+	tempoControl: HTMLInputElement;
 	view: HTMLElement;
 	
 	constructor(schedule: Scheduler){
@@ -70,16 +71,10 @@ class Transport {
 		this.playButton = makeElement("button", {
 			innerHTML: "PLAY",
 			id: "transport-play-button",
-			style: {
-				width: "100px",
-				borderRadius: "5px"
-			},
 			onclick: () => {
 				this.isPlaying = !this.isPlaying;
 				if(this.isPlaying){
-					this.playButton.innerHTML = "STOP";
-					//play that shit!
-					schedule.currentNote = 0;
+					this.playButton.innerHTML = "PAUSE";
 					schedule.nextNoteTime = context.currentTime;
 					schedule.schedule(); //it begins...
 				} else {
@@ -95,18 +90,50 @@ class Transport {
 					}
 				}
 			}
-		});
+		}, genericButton);
+
+		this.stopButton = makeElement("button", {
+			innerHTML: "STOP",
+			onclick: () => {
+				schedule.currentNote = 0;
+				window.clearTimeout(schedule.timerID);
+
+				//stop & clear all current Nodes.
+				for(const instrument in instruments){
+					if(instruments[instrument].currentNode !== null){
+						instruments[instrument].currentNode.stop();
+						instruments[instrument].currentNode = null;
+					}
+				}
+			}
+		}, genericButton);
 
 		this.view = makeElement("div", {
 			style: {
-				margin: "10px",
-				padding: "10px",
+				display: "flex",
+				flexFlow: "row",
+				marginTop: "10px",
 				border: "1px solid red",
 				borderRadius: "5px"
 			}
 		});
 
+		this.tempoControl = makeElement("input", {
+			type: "number",
+			min: "20",
+			max: "300",
+			value: "140",
+			style: {
+				margin: "10px"
+			},
+			oninput: () => {
+				tempo = parseInt(this.tempoControl.value);
+			}
+		});
+
 		this.view.appendChild(this.playButton)
+		this.view.appendChild(this.stopButton)
+		this.view.appendChild(this.tempoControl)
 	}
 }
 
