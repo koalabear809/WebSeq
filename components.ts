@@ -1,74 +1,56 @@
 var instruments = {};
-class Instrument{
-	name: string;
-	type: string;
-	playing: boolean;
-	playblocks?: Pad[];
-	buffer?: AudioBuffer;
-	currentNode?: AudioBufferSourceNode;
 
-	constructor(type: string, name: string){
-		this.name = name;
-		this.type = type;
-		this.playing = false;
-		this.currentNode = null;
-	}
-
-	controlView = () => {
+function Instrument(name: string){
+	this.name = name;
+	this.playing = false;
+	this.playblocks = null;
+	this.buffer = null;
+	this.currentNode= null;
+	this.view = null;
+	this.showControl = () => {
 		let controlWrapper = document.getElementById("seq-controls");	
 
 		//check if existing controls
 		if(controlWrapper.children.length > 0){
 			controlWrapper.removeChild(controlWrapper.children[0]);
 		}
-
-		let controls = new Controls(this.name);
-		this.buffer ? controls.drawWaveform() : console.log("waveform empty");
-		controlWrapper.appendChild(controls.view);
+		controlWrapper.appendChild(this.view);
 	}
 }
 
-class Controls {
-	name: string;
-	view: HTMLElement;
-	title: HTMLElement;
-	playButton: HTMLElement;
-	waveformDisplay: HTMLCanvasElement;
+function OneShot(name: string){
+	Instrument.call(this, name)
+		//let controls = new Controls(this.name);
+		//controlWrapper.appendChild(controls.view);
+	this.title = makeElement("div", {
+		innerHTML: this.name,
+		style: {
+			margin: "10px"
+		}
+	});
 
-	constructor(name: string){
-		this.name = name;
-		
-		this.title = makeElement("div", {
-			innerHTML: this.name,
-			style: {
-				margin: "10px"
-			}
-		});
+	this.playButton = makeElement('button', {
+		id: `play-${this.name}`,
+		innerHTML: "PLAY",
+		dataset: {
+			inst: this.name
+		},
+		style: {
+			cursor: "pointer"
+		},
+		onclick: () => {
+			console.log("Play button control clicked");
+		}
+	}, genericButton);
 
-		this.playButton = makeElement('button', {
-			id: `play-${this.name}`,
-			innerHTML: "PLAY",
-			dataset: {
-				inst: this.name
-			},
-			style: {
-				cursor: "pointer"
-			},
-			onclick: () => {
-				console.log("Play button control clicked");
-			}
-		}, genericButton);
+	this.view = document.createElement("div", {});
+	this.waveformDisplay = makeElement('canvas', {});
 
-		this.view = document.createElement("div", {});
-		this.waveformDisplay = makeElement('canvas', {});
+	this.view.appendChild(this.title);
+	this.view.appendChild(this.playButton);
+	this.view.appendChild(this.waveformDisplay);
 
-		//frankenstein
-		this.view.appendChild(this.title);
-		this.view.appendChild(this.playButton);
-		this.view.appendChild(this.waveformDisplay);
-	}
-
-	drawWaveform(){
+	this.drawWaveform = function(){
 		let sampleSkip = 100;
 
 		let samples = instruments[this.name]["buffer"].getChannelData(0);
@@ -88,101 +70,87 @@ class Controls {
 		}
 		ctx.stroke();
 	}
-}
 
-class Pad {
-	view: HTMLElement;
-	toggle: boolean;
-
-	constructor(num: number, name: string){
-		this.toggle = false;
-		this.view = makeElement('div', {
-			className: "pad",
-			style: {
-				width: "30px",
-				height: "30px",
-				border: "1px solid black",
-				backgroundColor: "#EDEDED",
-				margin: "5px",
-				borderRadius: "5px"
-			},
-			dataset: {
-				num: num.toString(),
-				instrument: name,
-			},
-			onclick: () => {
-				this.toggle = !this.toggle;
-				if(this.toggle){
-					setStyle(this.view, {backgroundColor: colorScheme["red"]});
-				} else {
-					setStyle(this.view, {backgroundColor: colorScheme["lightgrey"]});
-				}
-			}
-		})
+	this.setBuffer = async function(file: File){
+		this.buffer = await createAudioBufferFromFile(file)
+		this.drawWaveform()
 	}
 }
 
-class SeqRow {
-	pads: Pad[];
-	view: HTMLElement;
-	instSelector: HTMLElement;
-	button: HTMLElement;
-	padsWrapper: HTMLElement;
-
-	constructor(name: string){
-		this.pads = this.addPads(name);
-		instruments[name].playblocks = this.pads;
-
-		this.view = makeElement('div', {
-			className: "seq-row",
-			id: `row-${name}`
-		});
-
-		this.instSelector = makeElement('div', {
-			className: "inst-selector",
-			id: `inst-selector-${name}`
-		});
-
-		this.button = makeElement('div', {
-			className: "inst-selector-button",
-			id: `inst-selector-button-${name}`,
-			innerHTML: name,
-			style: {
-				cursor: "pointer",
-			},
-			onclick: instruments[name].controlView,
-			ondragover: (e) => {e.preventDefault();},
-			ondrop: async (e) => {
-				e.preventDefault();
-				instruments[name].buffer = await createAudioBufferFromFile(e.dataTransfer.files[0])
-				instruments[name].controlView();
+function Pad(num: number, name: string){
+	this.toggle = false;
+	this.view = makeElement('div', {
+		className: "pad",
+		style: {
+			width: "30px",
+			height: "30px",
+			border: "1px solid black",
+			backgroundColor: "#EDEDED",
+			margin: "5px",
+			borderRadius: "5px"
+		},
+		dataset: {
+			num: num.toString(),
+			instrument: name,
+		},
+		onclick: () => {
+			this.toggle = !this.toggle;
+			if(this.toggle){
+				setStyle(this.view, {backgroundColor: colorScheme["red"]});
+			} else {
+				setStyle(this.view, {backgroundColor: colorScheme["lightgrey"]});
 			}
-		}, genericButton);
-
-		this.padsWrapper = makeElement('div', {
-			className: "pads-wrapper",
-		});
-
-		this.pads.forEach(pad => {
-			this.padsWrapper.appendChild(pad.view);
-		});
-		this.instSelector.appendChild(this.button);
-		this.view.appendChild(this.instSelector);
-		this.view.appendChild(this.padsWrapper);
-	}
-
-	addPads(name: string): Pad[]{
-		let allPads = [];
-		for(let i = 0; i < numPads; i++){
-			allPads.push(new Pad(i, name));
 		}
-		return allPads;
-	}
+	});
 }
 
-class Seq {
-	addInstrument(name: string): any {
-		instruments[name] = new Instrument("sampler", name);
+function SeqRow(name: string){
+	this.pads = []
+	for(let i = 0; i < numPads; i++){
+		this.pads.push(new Pad(i, name));
+	}
+	instruments[name].playblocks = this.pads;
+
+	this.view = makeElement('div', {
+		className: "seq-row",
+		id: `row-${name}`
+	});
+	this.instSelector = makeElement('div', {
+		className: "inst-selector",
+		id: `inst-selector-${name}`
+	});
+	this.button = makeElement('div', {
+		className: "inst-selector-button",
+		id: `inst-selector-button-${name}`,
+		innerHTML: name,
+		style: {
+			cursor: "pointer",
+		},
+		onclick: instruments[name].showControl,
+		ondragover: (e: Event) => {e.preventDefault();},
+		ondrop: async (e: DragEvent) => {
+			e.preventDefault();
+			instruments[name].setBuffer(e.dataTransfer.files[0])
+			instruments[name].showControl();
+		}
+	}, genericButton);
+
+	this.padsWrapper = makeElement('div', {
+		className: "pads-wrapper",
+	});
+
+	this.pads.forEach(pad => {
+		this.padsWrapper.appendChild(pad.view);
+	});
+
+	this.instSelector.appendChild(this.button);
+	this.view.appendChild(this.instSelector);
+	this.view.appendChild(this.padsWrapper);
+}
+
+function Seq(){
+	this.addInstrument = (name: string) => {
+		instruments[name] = new OneShot(name);
 		var seqWrapper = document.getElementById("seq-pads-wrapper");
 		var seqRow = new SeqRow(name);
 		seqWrapper.appendChild(seqRow["view"]);
