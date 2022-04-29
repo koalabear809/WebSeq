@@ -95,8 +95,10 @@ class Transport {
 		this.stopButton = makeElement("button", {
 			innerHTML: "STOP",
 			onclick: () => {
+				this.playButton.innerHTML = "PLAY";
 				schedule.currentNote = 0;
 				window.clearTimeout(schedule.timerID);
+				this.isPlaying = false;
 
 				//stop & clear all current Nodes.
 				for(const instrument in instruments){

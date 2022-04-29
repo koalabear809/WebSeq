@@ -16,7 +16,8 @@ const genericButton = {
 		borderRadius: "5px",
 		margin: "10px",
 		border: "1px solid #9e9e9e",
-		backgroundColor: "#EDEDED"
+		backgroundColor: "#EDEDED",
+		cursor: "pointer"
 	},
 	onmouseover: function(){
 		setStyle(this, {

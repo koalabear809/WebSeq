@@ -1,5 +1,45 @@
 var instruments = {};
 
+function contextMenu(e: PointerEvent, menuEntries: any[]){
+	e.preventDefault();
+	let xpos = e.clientX;
+	let ypos = e.clientY;
+	let contextMenu = makeElement('div', {
+		id: "context-menu",
+		style: {
+			display: "block",
+			position: "absolute",
+			left: xpos,
+			top: ypos,
+			minWidth: "50px",
+			border: "1px solid black",
+			backgroundColor: "#EDEDED",
+			borderRadius: "5px",
+			boxShadow: "2px 2px 3px #9E9E9E",
+		}
+	});
+
+	menuEntries.forEach(entry => {
+		contextMenu.appendChild(makeElement('div', {
+			innerHTML: entry.text,
+			style: {
+				border: "1px solid #9E9E9E",
+				padding: "5px",
+				cursor: "pointer",
+			},
+			onmouseover: function(){
+				this.style.backgroundColor = "#9E9E9E";
+			},
+			onmouseleave: function(){
+				this.style.backgroundColor = "#EDEDED";
+			},
+			onclick: entry.action
+		}));
+	});
+
+	document.body.appendChild(contextMenu);
+}
+
 function Instrument(name: string){
 	this.name = name;
 	this.playing = false;
@@ -20,8 +60,6 @@ function Instrument(name: string){
 
 function OneShot(name: string){
 	Instrument.call(this, name)
-		//let controls = new Controls(this.name);
-		//controlWrapper.appendChild(controls.view);
 	this.title = makeElement("div", {
 		innerHTML: this.name,
 		style: {
@@ -44,7 +82,14 @@ function OneShot(name: string){
 	}, genericButton);
 
 	this.view = document.createElement("div", {});
-	this.waveformDisplay = makeElement('canvas', {});
+	this.waveformDisplay = makeElement('canvas', {
+		style: {
+			border: "1px solid #9E9E9E",
+			height: "100px",
+			width: "90%",
+			margin: "10px"
+		}
+	});
 
 	this.view.appendChild(this.title);
 	this.view.appendChild(this.playButton);
@@ -104,8 +149,9 @@ function Pad(num: number, name: string){
 	});
 }
 
-function SeqRow(name: string){
+function SeqRow(name: string, seq: any){
 	this.pads = []
+	this.seq = seq;
 	for(let i = 0; i < numPads; i++){
 		this.pads.push(new Pad(i, name));
 	}
@@ -122,16 +168,55 @@ function SeqRow(name: string){
 	this.button = makeElement('div', {
 		className: "inst-selector-button",
 		id: `inst-selector-button-${name}`,
-		innerHTML: name,
+		name: name,
+		innerText: name,
+		seq: this.seq,
 		style: {
 			cursor: "pointer",
 		},
-		onclick: instruments[name].showControl,
+		onclick: function(){
+			instruments[this.name].showControl();
+		},
 		ondragover: (e: Event) => {e.preventDefault();},
-		ondrop: async (e: DragEvent) => {
+		ondrop: async function(e: DragEvent){
 			e.preventDefault();
-			instruments[name].setBuffer(e.dataTransfer.files[0])
-			instruments[name].showControl();
+			instruments[this.name].setBuffer(e.dataTransfer.files[0])
+			instruments[this.name].showControl();
+		},
+		onkeydown: function(e: KeyboardEvent){
+			if(
+				e.code != "Enter" && 
+				e.code != "ArrowRight" &&
+				e.code != "ArrowLeft" &&
+				e.code != "ArrowDown" &&
+				e.code != "ArrowUp"
+			){
+				this.oninput = function(){
+					this.oninput = null;
+					let oldName = this.name;
+					this.name = this.textContent;
+					instruments[this.name] = instruments[oldName]
+					delete instruments[oldName];
+				};
+			}
+		},
+		oncontextmenu: function(e: any){
+			let menu = [{
+				text: "Rename",
+				action: function(){
+					e.path[0].contentEditable = true;
+					e.path[0].focus();
+					e.path[0].onblur = () => {e.path[0].contentEditable = false;};
+				}
+			},
+			{
+				text: "Delete",
+				action: () => {
+					console.log("delete");
+					this.seq.wrapper.delInstrument(name, this.parentElement.parentElement);
+				}
+			}]
+			contextMenu(e, menu)
 		}
 	}, genericButton);
 
@@ -149,10 +234,74 @@ function SeqRow(name: string){
 }
 
 function Seq(){
-	this.addInstrument = (name: string) => {
+	this.wrapper = document.getElementById("seq-pads-wrapper");
+	this.wrapper.addInstrument = (name: string) => {
 		instruments[name] = new OneShot(name);
-		var seqWrapper = document.getElementById("seq-pads-wrapper");
-		var seqRow = new SeqRow(name);
-		seqWrapper.appendChild(seqRow["view"]);
+		var seqRow = new SeqRow(name, this);
+		this.instrumentWrapper.appendChild(seqRow["view"]);
 	}
+	this.wrapper.delInstrument = function(name: string, seqrow: any){
+		let allKeys = Object.keys(instruments);
+		for(let i = 0; i < allKeys.length; i++){
+			if(allKeys[i] === name){
+				try{
+					instruments[allKeys[i - 1]].showControl();
+				} catch {
+					try{
+						instruments[i + 1].showControl();
+					} catch {
+						try{
+							instruments[0].showControl();
+						} catch {
+							document.getElementById('seq-controls').innerHTML = '';
+						}
+					}
+				}
+			}
+		}
+		delete instruments[name];
+		seqrow.remove();
+	}
+
+	this.allIndicators = [];
+	this.indicators = makeElement('div', {
+		style: {
+			display: "inline-flex",
+			marginLeft: "110px",
+		}
+	});
+
+	//indicators
+	(() => {
+		for(let i = 0; i < numPads; i++){
+			let newIndicator = makeElement('div', {
+				style: {
+					height: "5px",
+					width: "10px",
+					margin: "16px",
+					backgroundColor: "#EDEDED",
+				},
+			});
+
+			this.allIndicators.push(newIndicator);
+			this.indicators.appendChild(newIndicator);
+		}
+	})();
+
+	this.instrumentWrapper = makeElement('div', {});
+
+	this.addButton = makeElement('button', {
+		innerHTML: "+",
+		style: {
+			width: "20px"
+		},
+		onclick: function(){
+			let numInstruments = Object.keys(instruments).length;
+			this.parentElement.addInstrument(`inst ${numInstruments}`);
+		}
+	}, genericButton);
+
+	this.wrapper.appendChild(this.indicators);
+	this.wrapper.appendChild(this.instrumentWrapper);
+	this.wrapper.appendChild(this.addButton);
 }
